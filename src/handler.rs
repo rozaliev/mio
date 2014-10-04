@@ -1,9 +1,17 @@
 use event_loop::EventLoop;
 use token::Token;
 
+#[deriving(Show, PartialEq)]
+pub enum ReadHint {
+    DataHint,
+    HupHint,
+    ErrorHint,
+    UnknownHint
+}
+
 #[allow(unused_variable)]
 pub trait Handler<T, M: Send> {
-    fn readable(&mut self, event_loop: &mut EventLoop<T, M>, token: Token) {
+    fn readable(&mut self, event_loop: &mut EventLoop<T, M>, token: Token, hint: ReadHint) {
     }
 
     fn writable(&mut self, event_loop: &mut EventLoop<T, M>, token: Token) {
