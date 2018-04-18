@@ -92,12 +92,11 @@
 
 #![doc(html_root_url = "https://docs.rs/mio/0.6.14")]
 #![crate_name = "mio"]
-
 #![deny(warnings, missing_docs, missing_debug_implementations)]
 
+extern crate iovec;
 extern crate lazycell;
 extern crate net2;
-extern crate iovec;
 extern crate slab;
 
 #[cfg(target_os = "fuchsia")]
@@ -123,8 +122,11 @@ extern crate log;
 mod event_imp;
 mod io;
 mod poll;
-mod sys;
 mod token;
+
+// HACK
+#[allow(missing_docs, missing_debug_implementations)]
+pub mod sys;
 
 pub mod net;
 
@@ -161,27 +163,18 @@ pub mod tcp {
 #[doc(hidden)]
 pub mod udp;
 
-pub use poll::{
-    Poll,
-    Registration,
-    SetReadiness,
-};
-pub use event_imp::{
-    PollOpt,
-    Ready,
-};
+pub use event_imp::{PollOpt, Ready};
+pub use poll::{Poll, Registration, SetReadiness};
 pub use token::Token;
 
 pub mod event {
     //! Readiness event types and utilities.
 
-    pub use super::poll::{Events, Iter};
     pub use super::event_imp::{Event, Evented};
+    pub use super::poll::{Events, Iter};
 }
 
-pub use event::{
-    Events,
-};
+pub use event::Events;
 
 #[deprecated(since = "0.6.5", note = "use events:: instead")]
 #[cfg(feature = "with-deprecated")]
@@ -201,10 +194,8 @@ pub use io::deprecated::would_block;
 #[cfg(all(unix, not(target_os = "fuchsia")))]
 pub mod unix {
     //! Unix only extensions
-    pub use sys::{
-        EventedFd,
-    };
     pub use sys::unix::UnixReady;
+    pub use sys::EventedFd;
 }
 
 #[cfg(target_os = "fuchsia")]
@@ -216,10 +207,8 @@ pub mod fuchsia {
     //! This module depends on the [magenta-sys crate](https://crates.io/crates/magenta-sys)
     //! and so might introduce breaking changes, even on minor releases,
     //! so long as that crate remains unstable.
-    pub use sys::{
-        EventedHandle,
-    };
-    pub use sys::fuchsia::{FuchsiaReady, zx_signals_t};
+    pub use sys::fuchsia::{zx_signals_t, FuchsiaReady};
+    pub use sys::EventedHandle;
 }
 
 /// Windows-only extensions to the mio crate.
@@ -275,7 +264,7 @@ pub mod fuchsia {
 #[cfg(windows)]
 pub mod windows {
 
-    pub use sys::{Overlapped, Binding};
+    pub use sys::{Binding, Overlapped};
 }
 
 #[cfg(feature = "with-deprecated")]
@@ -293,6 +282,9 @@ mod convert {
     pub fn millis(duration: Duration) -> u64 {
         // Round up.
         let millis = (duration.subsec_nanos() + NANOS_PER_MILLI - 1) / NANOS_PER_MILLI;
-        duration.as_secs().saturating_mul(MILLIS_PER_SEC).saturating_add(millis as u64)
+        duration
+            .as_secs()
+            .saturating_mul(MILLIS_PER_SEC)
+            .saturating_add(millis as u64)
     }
 }
